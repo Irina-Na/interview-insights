@@ -1,0 +1,3 @@
+[submodule "speech-to-text"]
+	path = speech-to-text
+	url = https://github.com/Irina-Na/speech-to-text.git
