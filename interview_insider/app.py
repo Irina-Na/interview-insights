@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 import sys
 
 import streamlit as st
@@ -14,6 +15,7 @@ from interview_insider.qa_extractor import (  # noqa: E402
     run_qa_extraction,
     run_qa_extraction_for_file,
 )
+from interview_insider.qa_markdown_exporter import qa_json_to_markdown  # noqa: E402
 
 
 LLM_MODELS = ["5.2", "4.1", "o4-mini", "o3"]
@@ -166,3 +168,29 @@ if st.button("Extract QA"):
                 st.success(f"Done. QA saved to {QA_OUTPUT_DIR}.")
         else:
             st.warning("Path not found.")
+
+st.divider()
+st.subheader("Saved QA outputs")
+if not QA_OUTPUT_DIR.exists():
+    st.info("No QA JSON files yet.")
+else:
+    qa_files = sorted(
+        QA_OUTPUT_DIR.glob("*.json"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    if not qa_files:
+        st.info("No QA JSON files yet.")
+    else:
+        selected_file = st.selectbox(
+            "Select a QA JSON file",
+            qa_files,
+            format_func=lambda path: path.name,
+        )
+        if selected_file:
+            try:
+                qa_data = json.loads(selected_file.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError) as exc:
+                st.error(f"Failed to read {selected_file.name}: {exc}")
+            else:
+                st.markdown(qa_json_to_markdown(qa_data))

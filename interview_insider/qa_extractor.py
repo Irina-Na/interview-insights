@@ -10,6 +10,7 @@ from pypdf import PdfReader
 
 from interview_insider.llm_client import LLMClient
 from interview_insider.prompts.extracton_models_and_prompts import prompt_QA_extractor
+from interview_insider.qa_markdown_exporter import save_markdown_for_qa_json
 
 
 def build_system_prompt(*, vacancy: str | None, language: str = "english") -> str:
@@ -106,6 +107,7 @@ def run_qa_extraction(
         json.dumps(result_json, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+    save_markdown_for_qa_json(result_json, file_path)
     return file_path
 
 
