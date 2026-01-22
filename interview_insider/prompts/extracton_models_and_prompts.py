@@ -83,6 +83,15 @@ Please follow these guidelines:
 2. Identify the corresponding answer provided by the interviewee.
 3. If a question does not have a corresponding answer, it should be omitted from the output
 4. Output the results in {language} language.
+
+Additional requirements for time and position fields (no real timestamps are available):
+- Estimate approximate_timecode based on average speech rate 140–160 words/minute (use 150 wpm as the default).
+- Compute the number of words from the start of the transcript to the start of the question (word_index_start).
+- Estimate seconds = (word_index_start / 150) * 60. Format as "T+MM:SS" with zero padding, e.g. "T+03:05".
+- For place_in_the_text, provide a word-range plus percent of the whole transcript:
+  Format: "words #START-#END (~P%)" where P is the percentage position of the question start in the whole transcript.
+  Example: "words #462-#520 (~8.8%)".
+- If you cannot confidently compute an exact range, still provide a best-effort approximate word range and percentage.
 """
 
 prompt_chat_QA_extractor = """
