@@ -29,12 +29,12 @@ def qa_json_to_markdown(qa_json: dict[str, Any]) -> str:
 
     role = str(qa_json.get("employee_role_identified") or "").strip()
     if role:
-        lines.append(f"**????:** {role}")
+        lines.append(f"**Role identified:** {role}")
         lines.append("")
 
     stages = _normalize_list(qa_json.get("stages_of_conversation_short"))
     if stages:
-        lines.append("**?????? ?????????:**")
+        lines.append("**Conversation stages:**")
         lines.extend(f"- {stage}" for stage in stages)
         lines.append("")
 
@@ -53,45 +53,45 @@ def qa_json_to_markdown(qa_json: dict[str, Any]) -> str:
         timecode = str(item.get("timecode") or "").strip()
         place = str(item.get("place_in_the_text") or "").strip()
         if timecode:
-            lines.append(f"- **?????:** {timecode}")
+            lines.append(f"- **Timecode:** {timecode}")
         if place:
-            lines.append(f"- **????? ? ??????:** {place}")
+            lines.append(f"- **Place in the text:** {place}")
 
         candidate_answer = str(item.get("candidates_answer") or "").strip()
         if candidate_answer:
             lines.append("")
-            lines.append("**????? ????????? (??????):**")
+            lines.append("**Candidate answer (summary):**")
             lines.append(candidate_answer)
 
         short_eval = str(item.get("short_candidate_answer_evaluation") or "").strip()
         if short_eval:
             lines.append("")
-            lines.append("**??????? ?????? ??????:**")
+            lines.append("**Answer evaluation (short):**")
             lines.append(short_eval)
 
         key_idea = str(item.get("key_idea") or "").strip()
         if key_idea:
             lines.append("")
-            lines.append("**Ключевая идея:**")
+            lines.append("**Key idea:**")
             lines.append(key_idea)
 
         errors = _normalize_list(item.get("errors_and_problems"))
         if errors:
             lines.append("")
-            lines.append("**??????:**")
+            lines.append("**Issues:**")
             lines.extend(f"- {error}" for error in errors)
 
         improvements = _normalize_list(item.get("what_to_fix"))
         if improvements:
             lines.append("")
-            lines.append("**??? ???????? ?????:**")
+            lines.append("**How to improve the answer:**")
             lines.extend(f"- {tip}" for tip in improvements)
 
         ideal_ru = str(item.get("the_ideal_answer_example_ru") or "").strip()
         ideal_en = str(item.get("the_ideal_answer_example_eng") or "").strip()
         if ideal_ru or ideal_en:
             lines.append("")
-            lines.append("**??????:**")
+            lines.append("**Ideal answer examples:**")
             if ideal_ru:
                 lines.append("*RU:*")
                 lines.append(f"> {ideal_ru}")
