@@ -28,4 +28,6 @@ venv/
 Thumbs.db
 
 # Local data
-outputs/
+outputs/**
+transcripts/**
+*/interview_insights/**

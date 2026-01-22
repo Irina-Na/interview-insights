@@ -29,7 +29,7 @@ python -m venv .venv
 # Linux/macOS
 source .venv/bin/activate
 
-pip install -r requirements-insights.txt
+pip install -r requirements.txt
 ```
 
 ## CLI usage (QA extraction)
@@ -49,12 +49,19 @@ Outputs are saved to `interview_insider/interview_insights/`.
 ## Streamlit UI (insights only)
 
 ```bash
-streamlit run interview_insider/app_insights.py --server.maxUploadSize 2048
+streamlit run interview_insider/app.py --server.maxUploadSize 2048
 ```
 
 ## Docker
 Two-container setup (recommended):
 
+Win:
+```powershell
+$env:OPENAI_API_KEY="your_key"
+docker compose up --build
+```
+
+Linux:
 ```bash
 setx OPENAI_API_KEY "your_key"
 docker compose up --build
@@ -65,14 +72,18 @@ docker compose up --build
 
 Run only the Insights container (from compose):
 
+Win:
+```powershell
+$env:OPENAI_API_KEY="sk-.."
+docker compose up --build insights
+```
+
+Linux:
 ```bash
 setx OPENAI_API_KEY "your_key"
 docker compose up --build insights
 ```
 
-```powershell
-$env:OPENAI_API_KEY="sk-.."
-```
 ## Notes
 - Resume formats supported: `.pdf`, `.txt`, `.md`.
 - Scanned PDFs without text need OCR (not included).
