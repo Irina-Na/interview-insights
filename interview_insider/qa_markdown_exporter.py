@@ -29,12 +29,12 @@ def qa_json_to_markdown(qa_json: dict[str, Any]) -> str:
 
     role = str(qa_json.get("employee_role_identified") or "").strip()
     if role:
-        lines.append(f"**Р РѕР»СЊ:** {role}")
+        lines.append(f"**????:** {role}")
         lines.append("")
 
     stages = _normalize_list(qa_json.get("stages_of_conversation_short"))
     if stages:
-        lines.append("**РЎС‚Р°РґРёРё СЂР°Р·РіРѕРІРѕСЂР°:**")
+        lines.append("**?????? ?????????:**")
         lines.extend(f"- {stage}" for stage in stages)
         lines.append("")
 
@@ -53,9 +53,9 @@ def qa_json_to_markdown(qa_json: dict[str, Any]) -> str:
         timecode = str(item.get("approximate_timecode") or "").strip()
         place = str(item.get("place_in_the_text") or "").strip()
         if timecode:
-            lines.append(f"- **Р’СЂРµРјСЏ:** {timecode}")
+            lines.append(f"- **?????:** {timecode}")
         if place:
-            lines.append(f"- **РњРµСЃС‚Рѕ РІ С‚РµРєСЃС‚Рµ:** {place}")
+            lines.append(f"- **????? ? ??????:** {place}")
 
         text_span = item.get("text_span_QA")
         if isinstance(text_span, dict):
@@ -63,18 +63,18 @@ def qa_json_to_markdown(qa_json: dict[str, Any]) -> str:
             end = text_span.get("end_char")
             if start is not None or end is not None:
                 span_label = f"{start if start is not None else ''}..{end if end is not None else ''}"
-                lines.append(f"- **РЎРїР°РЅ Q/A:** {span_label}")
+                lines.append(f"- **???? Q/A:** {span_label}")
 
         candidate_answer = str(item.get("candidates_answer") or "").strip()
         if candidate_answer:
             lines.append("")
-            lines.append("**РћС‚РІРµС‚ РєР°РЅРґРёРґР°С‚Р° (РєСЂР°С‚РєРѕ):**")
+            lines.append("**????? ????????? (??????):**")
             lines.append(candidate_answer)
 
         short_eval = str(item.get("short_candidate_answer_evaluation") or "").strip()
         if short_eval:
             lines.append("")
-            lines.append("**РљСЂР°С‚РєР°СЏ РѕС†РµРЅРєР° РѕС‚РІРµС‚Р°:**")
+            lines.append("**??????? ?????? ??????:**")
             lines.append(short_eval)
 
         key_idea = str(item.get("key_idea") or "").strip()
@@ -86,13 +86,13 @@ def qa_json_to_markdown(qa_json: dict[str, Any]) -> str:
         errors = _normalize_list(item.get("errors_and_problems"))
         if errors:
             lines.append("")
-            lines.append("**РћС€РёР±РєРё:**")
+            lines.append("**??????:**")
             lines.extend(f"- {error}" for error in errors)
 
         improvements = _normalize_list(item.get("what_to_fix"))
         if improvements:
             lines.append("")
-            lines.append("**РљР°Рє РѕС‚РІРµС‡Р°С‚СЊ Р»СѓС‡С€Рµ:**")
+            lines.append("**??? ???????? ?????:**")
             lines.extend(f"- {tip}" for tip in improvements)
 
         ideal_ru = str(
@@ -108,7 +108,7 @@ def qa_json_to_markdown(qa_json: dict[str, Any]) -> str:
         ideal_legacy = str(item.get("the_ideal_answer") or "").strip()
         if ideal_ru or ideal_en or ideal_legacy:
             lines.append("")
-            lines.append("**РџСЂРёРјРµСЂ:**")
+            lines.append("**??????:**")
             if ideal_ru:
                 lines.append("*RU:*")
                 lines.append(f"> {ideal_ru}")

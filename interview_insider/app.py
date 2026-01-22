@@ -18,8 +18,70 @@ from interview_insider.qa_extractor import (  # noqa: E402
 from interview_insider.qa_markdown_exporter import qa_json_to_markdown  # noqa: E402
 
 
-LLM_MODELS = ["5.2", "4.1", "o4-mini", "o3"]
+LLM_MODELS = ["o3", "5.2", "4.1", "o4-mini"]
 QA_OUTPUT_DIR = REPO_ROOT / "interview_insider" / "interview_insights"
+MODEL_CARDS = [
+    {
+        "name": "o3",
+        "summary": "Reasoning model for complex tasks.",
+        "tagline": "Reasoning first",
+        "reasoning": "★★★★★",
+        "speed": "★☆☆",
+        "reasoning_supported": True,
+        "reasoning_tokens": True,
+        "theme": "sunset",
+        "pricing": {
+            "input": "$2.00",
+            "cached_input": "$0.50",
+            "output": "$8.00",
+        },
+    },
+    {
+        "name": "5.2",
+        "summary": "Best for coding and agentic tasks.",
+        "tagline": "Agentic coding",
+        "reasoning": "★★★★★",
+        "speed": "★★★",
+        "reasoning_supported": True,
+        "reasoning_tokens": True,
+        "theme": "ocean",
+        "pricing": {
+            "input": "$1.75",
+            "cached_input": "$0.18",
+            "output": "$14.00",
+        },
+    },
+    {
+        "name": "o4-mini",
+        "summary": "Fast, cost-efficient reasoning model.",
+        "tagline": "Fast + efficient",
+        "reasoning": "★★★★☆",
+        "speed": "★★★",
+        "reasoning_supported": True,
+        "reasoning_tokens": True,
+        "theme": "dawn",
+        "pricing": {
+            "input": "$1.10",
+            "cached_input": "$0.28",
+            "output": "$4.40",
+        },
+    },
+    {
+        "name": "4.1",
+        "summary": "Strongest non-reasoning model.",
+        "tagline": "Pure intelligence",
+        "intelligence": "★★★★☆",
+        "speed": "★★★",
+        "reasoning_supported": False,
+        "reasoning_tokens": False,
+        "theme": "cloud",
+        "pricing": {
+            "input": "$2.00",
+            "cached_input": "$0.50",
+            "output": "$8.00",
+        },
+    },
+]
 
 QA_PROGRESS_STAGES = [
     "Проверка входных данных",
@@ -33,18 +95,254 @@ QA_PROGRESS_STAGES = [
 
 
 st.set_page_config(page_title="Interview Insights (QA only)", page_icon="I", layout="wide")
+st.markdown(
+    """
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
+
+      :root {
+        --bg: #0f1116;
+        --surface: #171a21;
+        --surface-strong: #1f2430;
+        --text: #f3f5f9;
+        --muted: #9aa3b2;
+        --line: rgba(255,255,255,0.08);
+        --accent: #8be2ff;
+      }
+
+      .stApp {
+        background:
+          radial-gradient(1200px 520px at 15% -10%, rgba(98, 180, 255, 0.16), transparent 60%),
+          radial-gradient(900px 420px at 90% 0%, rgba(255, 199, 122, 0.12), transparent 55%),
+          var(--bg);
+        color: var(--text);
+        font-family: 'Plus Jakarta Sans', sans-serif;
+      }
+
+      h1, h2, h3, .section-title {
+        font-family: 'Space Grotesk', sans-serif;
+        letter-spacing: -0.02em;
+      }
+
+      .section-title {
+        font-size: 1.6rem;
+        font-weight: 600;
+        margin: 1.5rem 0 1rem 0;
+      }
+
+      .hero-subtitle {
+        color: var(--muted);
+        margin-top: -0.4rem;
+      }
+
+      .model-card {
+        background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 0;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+      }
+
+      .model-card-inner {
+        padding: 1.2rem 1.4rem 1.4rem 1.4rem;
+      }
+
+      .model-hero {
+        height: 120px;
+        border-radius: 18px;
+        margin: 1.1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0b0d12;
+      }
+
+      .theme-sunset {
+        background: radial-gradient(circle at top left, #ffd36a, #a1b8ff 70%);
+      }
+      .theme-ocean {
+        background: radial-gradient(circle at top left, #02d8ff, #4d6bff 70%);
+      }
+      .theme-dawn {
+        background: radial-gradient(circle at top left, #f7c7a6, #9fd4ff 70%);
+      }
+      .theme-cloud {
+        background: radial-gradient(circle at top left, #d7e3f3, #f5c0dd 70%);
+      }
+
+      .model-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.6rem;
+      }
+
+      .model-tagline {
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .badge {
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        color: #0b0d12;
+        background: var(--accent);
+        font-weight: 600;
+      }
+
+      .model-summary {
+        color: var(--text);
+        margin-bottom: 1rem;
+        line-height: 1.4;
+      }
+
+      .rating-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid var(--line);
+        padding: 0.6rem 0;
+      }
+
+      .rating-row:first-child {
+        border-top: none;
+      }
+
+      .rating-label {
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .rating-stars {
+        font-size: 0.9rem;
+        letter-spacing: 0.12em;
+      }
+
+      .pricing {
+        margin-top: 1rem;
+        background: var(--surface);
+        border-radius: 14px;
+        padding: 0.9rem 1rem;
+        border: 1px solid var(--line);
+      }
+
+      .pricing-header {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+      }
+
+      .pricing-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-top: 1px solid var(--line);
+        font-size: 0.92rem;
+      }
+
+      .pricing-row:first-of-type {
+        border-top: none;
+        margin-top: 0.4rem;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.08);
+        font-size: 0.78rem;
+        color: var(--text);
+      }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 st.title("Interview Insights (QA only)")
-st.markdown("Upload transcripts or provide a path; no transcription step.")
+st.markdown("<p class='hero-subtitle'>Upload transcripts or provide a path; no transcription step.</p>", unsafe_allow_html=True)
 
 with st.sidebar:
     st.header("LLM settings")
-    model = st.selectbox("Model", LLM_MODELS, index=2)
+    model = st.selectbox("Model", LLM_MODELS, index=0)
     language = st.text_input("Answer language", value="ru")
     vacancy = st.text_input("Vacancy name", value="")
     resume_file = st.file_uploader(
         "Resume (pdf/txt/md, optional)",
         type=["pdf", "txt", "md"],
     )
+
+st.markdown("<div class='section-title'>Model comparison</div>", unsafe_allow_html=True)
+
+
+def render_card(card: dict[str, object]) -> str:
+    pricing = card.get("pricing") or {}
+    reasoning_supported = card.get("reasoning_supported")
+    reasoning_tokens = card.get("reasoning_tokens")
+    if reasoning_supported:
+        badge_text = "Reasoning"
+    else:
+        badge_text = "Non-reasoning"
+
+    reasoning_stars = card.get("reasoning")
+    intelligence_stars = card.get("intelligence")
+    speed_stars = card.get("speed")
+    primary_label = "Reasoning" if reasoning_stars is not None else "Intelligence"
+    primary_stars = reasoning_stars or intelligence_stars or ""
+
+    return f"""
+      <div class="model-card">
+        <div class="model-hero theme-{card.get('theme', 'sunset')}">{card.get('name')}</div>
+        <div class="model-card-inner">
+          <div class="model-meta">
+            <div class="model-tagline">{card.get('tagline')}</div>
+            <span class="badge">{badge_text}</span>
+          </div>
+          <div class="model-summary">{card.get('summary')}</div>
+          <div class="pill">Reasoning tokens: {"Yes" if reasoning_tokens else "No"}</div>
+          <div class="rating-row">
+            <span class="rating-label">{primary_label}</span>
+            <div class="rating-stars">{primary_stars}</div>
+          </div>
+          <div class="rating-row">
+            <span class="rating-label">Speed</span>
+            <div class="rating-stars">{speed_stars}</div>
+          </div>
+          <div class="pricing">
+            <div class="pricing-header">
+              <span>Pricing</span>
+              <span>Per 1M tokens</span>
+            </div>
+            <div class="pricing-row">
+              <span>Input</span>
+              <span>{pricing.get('input', '?')}</span>
+            </div>
+            <div class="pricing-row">
+              <span>Cached input</span>
+              <span>{pricing.get('cached_input', '?')}</span>
+            </div>
+            <div class="pricing-row">
+              <span>Output</span>
+              <span>{pricing.get('output', '?')}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    """
+
+
+model_columns = st.columns(len(MODEL_CARDS), gap="large")
+for column, card in zip(model_columns, MODEL_CARDS):
+    with column:
+        st.markdown(render_card(card), unsafe_allow_html=True)
 
 st.subheader("Transcripts")
 transcript_files = st.file_uploader(
@@ -194,3 +492,86 @@ else:
                 st.error(f"Failed to read {selected_file.name}: {exc}")
             else:
                 st.markdown(qa_json_to_markdown(qa_data))
+
+st.divider()
+st.subheader("Markdown viewer")
+
+
+def _read_markdown(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return path.read_text(encoding="cp1251")
+
+
+available_markdowns = []
+if QA_OUTPUT_DIR.exists():
+    available_markdowns = sorted(
+        QA_OUTPUT_DIR.glob("*.md"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+
+selected_markdowns = st.multiselect(
+    "Select saved markdowns",
+    available_markdowns,
+    format_func=lambda path: path.name,
+)
+uploaded_markdowns = st.file_uploader(
+    "Upload markdown files",
+    type=["md"],
+    accept_multiple_files=True,
+)
+markdown_path_input = st.text_input(
+    "Or path to a markdown file/folder",
+    value="",
+)
+
+if st.button("View selected markdowns"):
+    rendered_any = False
+
+    for markdown_path in selected_markdowns:
+        try:
+            content = _read_markdown(markdown_path)
+        except OSError as exc:
+            st.error(f"Failed to read {markdown_path.name}: {exc}")
+        else:
+            st.markdown(f"### {markdown_path.name}")
+            st.markdown(content)
+            rendered_any = True
+
+    for markdown_file in uploaded_markdowns or []:
+        content = markdown_file.getvalue().decode("utf-8", errors="ignore")
+        st.markdown(f"### {markdown_file.name}")
+        st.markdown(content)
+        rendered_any = True
+
+    if markdown_path_input:
+        input_path = Path(markdown_path_input)
+        if input_path.is_file() and input_path.suffix.lower() == ".md":
+            try:
+                content = _read_markdown(input_path)
+            except OSError as exc:
+                st.error(f"Failed to read {input_path.name}: {exc}")
+            else:
+                st.markdown(f"### {input_path.name}")
+                st.markdown(content)
+                rendered_any = True
+        elif input_path.is_dir():
+            markdown_paths = sorted(input_path.glob("*.md"))
+            if not markdown_paths:
+                st.warning("No .md files found in the folder.")
+            for markdown_path in markdown_paths:
+                try:
+                    content = _read_markdown(markdown_path)
+                except OSError as exc:
+                    st.error(f"Failed to read {markdown_path.name}: {exc}")
+                else:
+                    st.markdown(f"### {markdown_path.name}")
+                    st.markdown(content)
+                    rendered_any = True
+        else:
+            st.warning("Path not found or not a markdown file.")
+
+    if not rendered_any:
+        st.info("No markdowns selected.")
