@@ -1,10 +1,18 @@
-# Interview Insights
+ï»¿# Interview Insights
 
-Pipeline for analyzing interview recordings: ingest audio/video, transcribe with the existing speech-to-text module, and send transcripts to LLM (GPT-5.2) for feedback (errors, better answers, materials).
+Pipeline for interview recordings: run transcription, collect transcripts in `transcriptions/`, and write insights/results to `inrewiev_insides/`.
+
+## Flow
+1) Place raw interview audio/video where the speech-to-text runner can reach it.
+2) Start the transcription job (via the `speech-to-text` module). All generated text lands in `transcriptions/`.
+3) Feed transcripts into the analysis step (LLM prompts, scoring, materials). Outputs are saved in `inrewiev_insides/`.
+4) Review results in `inrewiev_insides/`; rerun analysis if you adjust prompts or inputs.
 
 ## Layout
-- `speech-to-text/` — git submodule pointing to https://github.com/Irina-Na/speech-to-text
-- `src/` — interview analysis code (prompts, analysis, UI entrypoints)
+- `speech-to-text/` - git submodule pointing to https://github.com/Irina-Na/speech-to-text
+- `src/` - interview analysis code (prompts, analysis, UI entrypoints)
+- `transcriptions/` - collected raw transcripts from each run
+- `inrewiev_insides/` - generated insights and final artifacts
 
 ## Getting started
 ```bash
@@ -20,7 +28,3 @@ python -m venv .venv
 .venv\Scripts\activate
 pip install -e .
 ```
-
-## Notes
-- `speech-to-text` stays isolated, so you can update or replace ASR independently.
-- Add your LLM prompts and analysis logic under `src/`.
