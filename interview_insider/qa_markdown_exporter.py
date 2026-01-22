@@ -50,20 +50,12 @@ def qa_json_to_markdown(qa_json: dict[str, Any]) -> str:
         title = f"## Q{index}. {question}" if question else f"## Q{index}"
         lines.append(title)
 
-        timecode = str(item.get("approximate_timecode") or "").strip()
+        timecode = str(item.get("timecode") or "").strip()
         place = str(item.get("place_in_the_text") or "").strip()
         if timecode:
             lines.append(f"- **?????:** {timecode}")
         if place:
             lines.append(f"- **????? ? ??????:** {place}")
-
-        text_span = item.get("text_span_QA")
-        if isinstance(text_span, dict):
-            start = text_span.get("start_char")
-            end = text_span.get("end_char")
-            if start is not None or end is not None:
-                span_label = f"{start if start is not None else ''}..{end if end is not None else ''}"
-                lines.append(f"- **???? Q/A:** {span_label}")
 
         candidate_answer = str(item.get("candidates_answer") or "").strip()
         if candidate_answer:
@@ -95,18 +87,9 @@ def qa_json_to_markdown(qa_json: dict[str, Any]) -> str:
             lines.append("**??? ???????? ?????:**")
             lines.extend(f"- {tip}" for tip in improvements)
 
-        ideal_ru = str(
-            item.get("the_ideal_answer_example_ru")
-            or item.get("the_ideal_answer_ru")
-            or ""
-        ).strip()
-        ideal_en = str(
-            item.get("the_ideal_answer_example_eng")
-            or item.get("the_ideal_answer_eng")
-            or ""
-        ).strip()
-        ideal_legacy = str(item.get("the_ideal_answer") or "").strip()
-        if ideal_ru or ideal_en or ideal_legacy:
+        ideal_ru = str(item.get("the_ideal_answer_example_ru") or "").strip()
+        ideal_en = str(item.get("the_ideal_answer_example_eng") or "").strip()
+        if ideal_ru or ideal_en:
             lines.append("")
             lines.append("**??????:**")
             if ideal_ru:
@@ -115,8 +98,6 @@ def qa_json_to_markdown(qa_json: dict[str, Any]) -> str:
             if ideal_en:
                 lines.append("*EN:*")
                 lines.append(f"> {ideal_en}")
-            if ideal_legacy and not (ideal_ru or ideal_en):
-                lines.append(f"> {ideal_legacy}")
 
         lines.append("")
         lines.append("---")

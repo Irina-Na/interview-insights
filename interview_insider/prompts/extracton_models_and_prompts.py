@@ -5,48 +5,10 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
-class TextSpan(BaseModel):
-    start_char: int | None = Field(
-        default=None, ge=0, description="Start character index in the transcript text."
-    )
-    end_char: int | None = Field(
-        default=None, ge=0, description="End character index in the transcript text."
-    )
-
-
-
-class AnswerError(BaseModel):
-    category: Literal[
-        "grammar",
-        "vocabulary",
-        "pronunciation",
-        "fluency",
-        "coherence",
-        "structure",
-        "register",
-        "filler_words",
-        "content",
-        "other",
-    ] = Field(description="Category of the error in the answer.")
-    description: str = Field(description="What is wrong in the answer.")
-    severity: Literal["low", "medium", "high"] | None = Field(
-        default=None, description="Estimated severity of the error."
-    )
-    text_span: TextSpan | None = Field(
-        default=None, description="Where the error appears in the transcript."
-    )
-    correction: str | None = Field(
-        default=None, description="Suggested correction for the specific error."
-    )
-    rule_or_tip: str | None = Field(
-        default=None, description="Optional rule or tip explaining the correction."
-    )
-
-
 class QAItem(BaseModel):
     question: str = Field(description="A concise formulation of the question asked by the interviewer, preserving important nuances")
-    approximate_timecode: str = Field(
-        default=..., description="Approximate timecode when the question was asked (calculated from an average speech rate of ~140–160 words/min)"
+    timecode: str = Field(
+        default=..., description="Timecode when the question was asked"
     )
     place_in_the_text: str = Field(description="semantic block reference point in the transcript text") 
     candidates_answer: str = Field(description="Essence of the Answer given by the candidate")
@@ -58,9 +20,6 @@ class QAItem(BaseModel):
     the_ideal_answer_example_eng: str 
     the_ideal_answer_example_ru: str 
     key_idea: str
-    text_span_QA: TextSpan = Field(
-            default=..., description="Place of this Q/A in the transcript"
-        )
 
 class QAExtraction(BaseModel):
     vacancy: str | None = Field(
@@ -83,15 +42,6 @@ Please follow these guidelines:
 2. Identify the corresponding answer provided by the interviewee.
 3. If a question does not have a corresponding answer, it should be omitted from the output
 4. Output the results in {language} language.
-
-Additional requirements for time and position fields (no real timestamps are available):
-- Estimate approximate_timecode based on average speech rate 140–160 words/minute (use 150 wpm as the default).
-- Compute the number of words from the start of the transcript to the start of the question (word_index_start).
-- Estimate seconds = (word_index_start / 150) * 60. Format as "T+MM:SS" with zero padding, e.g. "T+03:05".
-- For place_in_the_text, provide a word-range plus percent of the whole transcript:
-  Format: "words #START-#END (~P%)" where P is the percentage position of the question start in the whole transcript.
-  Example: "words #462-#520 (~8.8%)".
-- If you cannot confidently compute an exact range, still provide a best-effort approximate word range and percentage.
 """
 
 prompt_chat_QA_extractor = """
