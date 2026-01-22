@@ -44,29 +44,33 @@ class AnswerError(BaseModel):
 
 
 class QAItem(BaseModel):
-    question: str = Field(description="A concise formulation of the question asked by the interviewer, preserving important nuances.")
+    question: str = Field(description="A concise formulation of the question asked by the interviewer, preserving important nuances")
     approximate_timecode: str = Field(
-        default=..., description="Approximate timecode when the question was asked."
+        default=..., description="Approximate timecode when the question was asked (calculated from an average speech rate of ~140–160 words/min)"
     )
-    place_in_the_text: str
-    candidates_answer: str = Field(description="Essence of the Answer given by the candidate.")
+    place_in_the_text: str = Field(description="semantic block reference point in the transcript text") 
+    candidates_answer: str = Field(description="Essence of the Answer given by the candidate")
+    short_candidate_answer_evaluation: str 
     errors_and_problems: list[str] = Field(
-        default_factory=list, description="List of errors in the candidate's answer."
+        default_factory=list, description="List of errors in the candidate's answer"
     )
     what_to_fix: str 
-    the_ideal_answer: str 
+    the_ideal_answer_example_eng: str 
+    the_ideal_answer_example_ru: str 
+    key_idea: str
     text_span_QA: TextSpan = Field(
-            default=..., description="Place of this Q/A in the transcript."
+            default=..., description="Place of this Q/A in the transcript"
         )
 
 class QAExtraction(BaseModel):
     vacancy: str | None = Field(
-        default=None, description="Vacancy or position being interviewed for."
+        default=None, description="Vacancy or position being interviewed for"
     )
     employee_role_identified: str 
+    stages_of_conversation_short: list[str]
     items: list[QAItem] = Field(
         default_factory=list,
-        description="List of extracted interviewer question/candidate answer pairs.",
+        description="List of extracted interviewer question/candidate answer pairs",
     )
 
 

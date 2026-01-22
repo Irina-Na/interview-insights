@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 from pathlib import Path
@@ -29,7 +29,13 @@ def qa_json_to_markdown(qa_json: dict[str, Any]) -> str:
 
     role = str(qa_json.get("employee_role_identified") or "").strip()
     if role:
-        lines.append(f"**Роль:** {role}")
+        lines.append(f"**Р РѕР»СЊ:** {role}")
+        lines.append("")
+
+    stages = _normalize_list(qa_json.get("stages_of_conversation_short"))
+    if stages:
+        lines.append("**РЎС‚Р°РґРёРё СЂР°Р·РіРѕРІРѕСЂР°:**")
+        lines.extend(f"- {stage}" for stage in stages)
         lines.append("")
 
     items = qa_json.get("items") or []
@@ -47,33 +53,70 @@ def qa_json_to_markdown(qa_json: dict[str, Any]) -> str:
         timecode = str(item.get("approximate_timecode") or "").strip()
         place = str(item.get("place_in_the_text") or "").strip()
         if timecode:
-            lines.append(f"- **Время:** {timecode}")
+            lines.append(f"- **Р’СЂРµРјСЏ:** {timecode}")
         if place:
-            lines.append(f"- **Место в тексте:** {place}")
+            lines.append(f"- **РњРµСЃС‚Рѕ РІ С‚РµРєСЃС‚Рµ:** {place}")
+
+        text_span = item.get("text_span_QA")
+        if isinstance(text_span, dict):
+            start = text_span.get("start_char")
+            end = text_span.get("end_char")
+            if start is not None or end is not None:
+                span_label = f"{start if start is not None else ''}..{end if end is not None else ''}"
+                lines.append(f"- **РЎРїР°РЅ Q/A:** {span_label}")
 
         candidate_answer = str(item.get("candidates_answer") or "").strip()
         if candidate_answer:
             lines.append("")
-            lines.append("**Ответ кандидата (кратко):**")
+            lines.append("**РћС‚РІРµС‚ РєР°РЅРґРёРґР°С‚Р° (РєСЂР°С‚РєРѕ):**")
             lines.append(candidate_answer)
+
+        short_eval = str(item.get("short_candidate_answer_evaluation") or "").strip()
+        if short_eval:
+            lines.append("")
+            lines.append("**РљСЂР°С‚РєР°СЏ РѕС†РµРЅРєР° РѕС‚РІРµС‚Р°:**")
+            lines.append(short_eval)
+
+        key_idea = str(item.get("key_idea") or "").strip()
+        if key_idea:
+            lines.append("")
+            lines.append("**Ключевая идея:**")
+            lines.append(key_idea)
 
         errors = _normalize_list(item.get("errors_and_problems"))
         if errors:
             lines.append("")
-            lines.append("**Ошибки:**")
+            lines.append("**РћС€РёР±РєРё:**")
             lines.extend(f"- {error}" for error in errors)
 
         improvements = _normalize_list(item.get("what_to_fix"))
         if improvements:
             lines.append("")
-            lines.append("**Как отвечать лучше:**")
+            lines.append("**РљР°Рє РѕС‚РІРµС‡Р°С‚СЊ Р»СѓС‡С€Рµ:**")
             lines.extend(f"- {tip}" for tip in improvements)
 
-        ideal_answer = str(item.get("the_ideal_answer") or "").strip()
-        if ideal_answer:
+        ideal_ru = str(
+            item.get("the_ideal_answer_example_ru")
+            or item.get("the_ideal_answer_ru")
+            or ""
+        ).strip()
+        ideal_en = str(
+            item.get("the_ideal_answer_example_eng")
+            or item.get("the_ideal_answer_eng")
+            or ""
+        ).strip()
+        ideal_legacy = str(item.get("the_ideal_answer") or "").strip()
+        if ideal_ru or ideal_en or ideal_legacy:
             lines.append("")
-            lines.append("**Пример:**")
-            lines.append(f"> {ideal_answer}")
+            lines.append("**РџСЂРёРјРµСЂ:**")
+            if ideal_ru:
+                lines.append("*RU:*")
+                lines.append(f"> {ideal_ru}")
+            if ideal_en:
+                lines.append("*EN:*")
+                lines.append(f"> {ideal_en}")
+            if ideal_legacy and not (ideal_ru or ideal_en):
+                lines.append(f"> {ideal_legacy}")
 
         lines.append("")
         lines.append("---")
