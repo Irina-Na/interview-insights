@@ -5,7 +5,7 @@ from typing import Literal, Type, TypeVar
 from openai import OpenAI
 from pydantic import BaseModel
 
-from interview_insider.prompts.QA_extractor import QAExtraction
+from interview_insider.prompts.extracton_models_and_prompts import QAExtraction
 
 ModelChoice = Literal["5.2", "4.1", "o4-mini", "o3"]
 T = TypeVar("T", bound=BaseModel)

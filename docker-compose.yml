@@ -1,0 +1,23 @@
+services:
+  asr:
+    build:
+      context: ./speech-to-text
+      dockerfile: Dockerfile
+    image: interview-asr
+    ports:
+      - "8502:8501"
+    volumes:
+      - ./transcriptions:/app/outputs
+
+  insights:
+    build:
+      context: .
+      dockerfile: Dockerfile.insights
+    image: interview-insights
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./transcriptions:/app/transcriptions
+      - ./interview_insider/interview_insights:/app/interview_insider/interview_insights

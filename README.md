@@ -1,30 +1,78 @@
-﻿# Interview Insights
+# Interview Insights
 
-Pipeline for interview recordings: run transcription, collect transcripts in `transcriptions/`, and write insights/results to `inrewiev_insides/`.
+Pipeline for interview recordings: transcribe audio/video, then extract Q/A insights with an LLM.
 
-## Flow
-1) Place raw interview audio/video where the speech-to-text runner can reach it.
-2) Start the transcription job (via the `speech-to-text` module). All generated text lands in `transcriptions/`.
-3) Feed transcripts into the analysis step (LLM prompts, scoring, materials). Outputs are saved in `inrewiev_insides/`.
-4) Review results in `inrewiev_insides/`; rerun analysis if you adjust prompts or inputs.
+## What it does
+- Transcribes media into `transcriptions/` (via `speech-to-text/`).
+- Extracts Q/A pairs into `interview_insider/interview_insights/`.
+- Supports CLI and a Streamlit UI for insights.
 
-## Layout
-- `speech-to-text/` - git submodule pointing to https://github.com/Irina-Na/speech-to-text
-- `src/` - interview analysis code (prompts, analysis, UI entrypoints)
-- `transcriptions/` - collected raw transcripts from each run
-- `inrewiev_insides/` - generated insights and final artifacts
+## Project layout
+- `speech-to-text/` - submodule with Whisper transcriber (separate container).
+- `transcriptions/` - transcripts (txt).
+- `interview_insider/` - extraction code and Streamlit app (insights only).
+- `interview_insider/interview_insights/` - JSON outputs.
 
-## Getting started
+## Requirements
+- Python 3.12+
+- FFmpeg (for Whisper, in the ASR container)
+- OpenAI API key for extraction (`OPENAI_API_KEY`)
+
+## Install (local)
 ```bash
-# clone
 git clone --recurse-submodules https://github.com/Irina-Na/interview-insights.git
 cd interview-insights
 
-# if already cloned without submodules
-git submodule update --init --recursive
-
-# optional: install deps
 python -m venv .venv
-.venv\Scripts\activate
-pip install -e .
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+# Linux/macOS
+source .venv/bin/activate
+
+pip install -r requirements-insights.txt
 ```
+
+## CLI usage (QA extraction)
+Extract from a transcript file or a folder of `.txt` files.
+
+```bash
+python -m interview_insider.qa_extractor \
+  --model o4-mini \
+  --transcript transcriptions \
+  --vacancy "Data Analyst" \
+  --resume path/to/resume.pdf \
+  --language ru
+```
+
+Outputs are saved to `interview_insider/interview_insights/`.
+
+## Streamlit UI (insights only)
+
+```bash
+streamlit run interview_insider/app_insights.py --server.maxUploadSize 2048
+```
+
+## Docker
+Two-container setup (recommended):
+
+```bash
+setx OPENAI_API_KEY "your_key"
+docker compose up --build
+```
+
+- ASR UI: http://localhost:8502 (writes transcripts into `transcriptions/`)
+- Insights UI: http://localhost:8501 (reads from `transcriptions/`)
+
+Run only the Insights container (from compose):
+
+```bash
+setx OPENAI_API_KEY "your_key"
+docker compose up --build insights
+```
+
+```powershell
+$env:OPENAI_API_KEY="sk-.."
+```
+## Notes
+- Resume formats supported: `.pdf`, `.txt`, `.md`.
+- Scanned PDFs without text need OCR (not included).
