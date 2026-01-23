@@ -92,6 +92,7 @@ QA_PROGRESS_STAGES = [
     "Post-processing / normalization",
     "Saving output files",
 ]
+QA_PROGRESS_INDEX = {stage: idx for idx, stage in enumerate(QA_PROGRESS_STAGES)}
 
 
 st.set_page_config(page_title="Interview Insights (QA only)", page_icon="I", layout="wide")
@@ -362,15 +363,37 @@ st.markdown(
 
 if st.button("Extract QA"):
     stage_text = st.empty()
+    stage_list = st.empty()
     progress_bar = st.progress(0, text="Preparing QA extraction...")
 
-    def set_stage(stage_index: int, detail: str = "") -> None:
-        stage_label = QA_PROGRESS_STAGES[stage_index]
+    def _render_stage_list(current_index: int) -> str:
+        lines = ["**Extraction stages (live):**"]
+        for idx, stage in enumerate(QA_PROGRESS_STAGES):
+            if idx < current_index:
+                marker = "x"
+            elif idx == current_index:
+                marker = ">"
+            else:
+                marker = " "
+            lines.append(f"- [{marker}] {stage}")
+        return "\n".join(lines)
+
+    def set_stage(stage: int | str, detail: str = "") -> None:
+        if isinstance(stage, int):
+            stage_index = stage
+            stage_label = QA_PROGRESS_STAGES[stage_index]
+        else:
+            stage_label = stage
+            stage_index = QA_PROGRESS_INDEX.get(stage_label, 0)
         if detail:
             stage_label = f"{stage_label} - {detail}"
-        progress_value = int((stage_index / len(QA_PROGRESS_STAGES)) * 100)
-        progress_bar.progress(progress_value, text=stage_label)
+        progress_value = int(((stage_index + 1) / len(QA_PROGRESS_STAGES)) * 100)
+        progress_bar.progress(min(100, progress_value), text=stage_label)
         stage_text.caption(stage_label)
+        stage_list.markdown(_render_stage_list(stage_index))
+
+    def stage_callback(stage_label: str, detail: str = "") -> None:
+        set_stage(stage_label, detail)
 
     set_stage(0)
     QA_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -393,13 +416,15 @@ if st.button("Extract QA"):
 
     if transcript_files:
         set_stage(2, f"files: {len(transcript_files)}")
-        file_progress = st.progress(0, text="Preparing transcripts...")
+        file_progress = None
+        if len(transcript_files) > 1:
+            file_progress = st.progress(0, text="Preparing transcripts...")
         for index, transcript in enumerate(transcript_files, start=1):
+            set_stage(2, transcript.name)
             transcript_text = transcript.getvalue().decode("utf-8", errors="ignore").strip()
             if not transcript_text:
                 continue
-            set_stage(3, transcript.name)
-            set_stage(4, transcript.name)
+            file_stage_callback = lambda label, name=transcript.name: stage_callback(label, name)
             run_qa_extraction(
                 transcript_text=transcript_text,
                 resume_text=resume_text,
@@ -408,21 +433,20 @@ if st.button("Extract QA"):
                 language=language,
                 output_dir=QA_OUTPUT_DIR,
                 output_name=f"{Path(transcript.name).stem}_qa.json",
+                stage_callback=file_stage_callback,
             )
-            set_stage(5, transcript.name)
-            set_stage(6, transcript.name)
-            file_progress.progress(
-                min(100, int(index / len(transcript_files) * 100)),
-                text=f"Processed: {transcript.name}",
-            )
+            if file_progress is not None:
+                file_progress.progress(
+                    min(100, int(index / len(transcript_files) * 100)),
+                    text=f"Processed: {transcript.name}",
+                )
         progress_bar.progress(100, text="Done")
         st.success(f"Done. QA saved to {QA_OUTPUT_DIR}.")
     elif transcript_path_input:
         input_path = Path(transcript_path_input)
         if input_path.is_file():
             set_stage(2, input_path.name)
-            set_stage(3, input_path.name)
-            set_stage(4, input_path.name)
+            file_stage_callback = lambda label, name=input_path.name: stage_callback(label, name)
             run_qa_extraction_for_file(
                 transcript_path=input_path,
                 resume_text=resume_text,
@@ -430,9 +454,8 @@ if st.button("Extract QA"):
                 vacancy=vacancy or None,
                 language=language,
                 output_dir=QA_OUTPUT_DIR,
+                stage_callback=file_stage_callback,
             )
-            set_stage(5, input_path.name)
-            set_stage(6, input_path.name)
             progress_bar.progress(100, text="Done")
             st.success(f"Done. QA saved to {QA_OUTPUT_DIR}.")
         elif input_path.is_dir():
@@ -441,10 +464,12 @@ if st.button("Extract QA"):
                 st.warning("No .txt files found in the folder.")
             else:
                 set_stage(2, f"files: {len(transcript_paths)}")
-                file_progress = st.progress(0, text="Preparing transcripts...")
+                file_progress = None
+                if len(transcript_paths) > 1:
+                    file_progress = st.progress(0, text="Preparing transcripts...")
                 for index, transcript_path in enumerate(transcript_paths, start=1):
-                    set_stage(3, transcript_path.name)
-                    set_stage(4, transcript_path.name)
+                    set_stage(2, transcript_path.name)
+                    file_stage_callback = lambda label, name=transcript_path.name: stage_callback(label, name)
                     run_qa_extraction_for_file(
                         transcript_path=transcript_path,
                         resume_text=resume_text,
@@ -452,16 +477,16 @@ if st.button("Extract QA"):
                         vacancy=vacancy or None,
                         language=language,
                         output_dir=QA_OUTPUT_DIR,
+                        stage_callback=file_stage_callback,
                     )
-                    set_stage(5, transcript_path.name)
-                    set_stage(6, transcript_path.name)
-                    file_progress.progress(
-                        min(
-                            100,
-                            int(index / len(transcript_paths) * 100),
-                        ),
-                        text=f"Processed: {transcript_path.name}",
-                    )
+                    if file_progress is not None:
+                        file_progress.progress(
+                            min(
+                                100,
+                                int(index / len(transcript_paths) * 100),
+                            ),
+                            text=f"Processed: {transcript_path.name}",
+                        )
                 progress_bar.progress(100, text="Done")
                 st.success(f"Done. QA saved to {QA_OUTPUT_DIR}.")
         else:

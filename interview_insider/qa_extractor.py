@@ -5,6 +5,7 @@ import json
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
+from typing import Callable
 
 from pypdf import PdfReader
 
@@ -78,19 +79,26 @@ def run_qa_extraction(
     language: str = "ru",
     output_dir: str | Path = "interview_insider/interview_insights",
     output_name: str | None = None,
+    stage_callback: Callable[[str], None] | None = None,
 ) -> Path:
+    if stage_callback:
+        stage_callback("Preparing context for the LLM")
     system_prompt = build_system_prompt(vacancy=vacancy, language=language)
     user_message = (
         f"#RESUME: {resume_text or ''}\n"
         f"#INTERVIEW TRANSCRIPTION: {transcript_text}"
     )
     llm_client = LLMClient()
+    if stage_callback:
+        stage_callback("Querying the model (LLM)")
     result_json = llm_client.extract_qa_json(
         system_prompt=system_prompt,
         user_message=user_message,
         model=model,
     )
 
+    if stage_callback:
+        stage_callback("Post-processing / normalization")
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
@@ -101,6 +109,9 @@ def run_qa_extraction(
     else:
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = f"qa_extraction_{timestamp}.json"
+
+    if stage_callback:
+        stage_callback("Saving output files")
 
     file_path = output_path / filename
     file_path.write_text(
@@ -119,6 +130,7 @@ def run_qa_extraction_for_file(
     vacancy: str | None,
     language: str,
     output_dir: str | Path,
+    stage_callback: Callable[[str], None] | None = None,
 ) -> Path:
     transcript_text = _read_text_file(transcript_path).strip()
     if not transcript_text:
@@ -131,6 +143,7 @@ def run_qa_extraction_for_file(
         language=language,
         output_dir=output_dir,
         output_name=_default_output_name(transcript_path),
+        stage_callback=stage_callback,
     )
 
 
