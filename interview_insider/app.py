@@ -25,8 +25,8 @@ MODEL_CARDS = [
         "name": "o3",
         "summary": "Reasoning model for complex tasks.",
         "tagline": "Reasoning first",
-        "reasoning": "???",
-        "speed": "?",
+        "reasoning": "5/5",
+        "speed": "1/3",
         "reasoning_supported": True,
         "reasoning_tokens": True,
         "theme": "sunset",
@@ -40,8 +40,8 @@ MODEL_CARDS = [
         "name": "5.2",
         "summary": "Best for coding and agentic tasks.",
         "tagline": "Agentic coding",
-        "reasoning": "???",
-        "speed": "?",
+        "reasoning": "5/5",
+        "speed": "3/3",
         "reasoning_supported": True,
         "reasoning_tokens": True,
         "theme": "ocean",
@@ -55,8 +55,8 @@ MODEL_CARDS = [
         "name": "o4-mini",
         "summary": "Fast, cost-efficient reasoning model.",
         "tagline": "Fast + efficient",
-        "reasoning": "???",
-        "speed": "?",
+        "reasoning": "4/5",
+        "speed": "3/3",
         "reasoning_supported": True,
         "reasoning_tokens": True,
         "theme": "dawn",
@@ -70,8 +70,8 @@ MODEL_CARDS = [
         "name": "4.1",
         "summary": "Strongest non-reasoning model.",
         "tagline": "Pure intelligence",
-        "intelligence": "???",
-        "speed": "?",
+        "intelligence": "4/5",
+        "speed": "3/3",
         "reasoning_supported": False,
         "reasoning_tokens": False,
         "theme": "cloud",
@@ -356,18 +356,18 @@ transcript_path_input = st.text_input(
 )
 
 st.markdown(
-    "**Стадии извлечения:**\n"
+    "**Extraction stages:**\n"
     + "\n".join(f"- {stage}" for stage in QA_PROGRESS_STAGES)
 )
 
 if st.button("Extract QA"):
     stage_text = st.empty()
-    progress_bar = st.progress(0, text="Готовимся к извлечению QA...")
+    progress_bar = st.progress(0, text="Preparing QA extraction...")
 
     def set_stage(stage_index: int, detail: str = "") -> None:
         stage_label = QA_PROGRESS_STAGES[stage_index]
         if detail:
-            stage_label = f"{stage_label} — {detail}"
+            stage_label = f"{stage_label} - {detail}"
         progress_value = int((stage_index / len(QA_PROGRESS_STAGES)) * 100)
         progress_bar.progress(progress_value, text=stage_label)
         stage_text.caption(stage_label)
@@ -377,7 +377,7 @@ if st.button("Extract QA"):
 
     if not transcript_files and not transcript_path_input:
         st.warning("Upload files or provide a path.")
-        progress_bar.progress(0, text="Нужны транскрипты для старта.")
+        progress_bar.progress(0, text="Transcripts are required to start.")
         stage_text.empty()
         st.stop()
 
@@ -389,11 +389,11 @@ if st.button("Extract QA"):
             Path(resume_file.name).suffix,
         )
     else:
-        stage_text.caption("Извлечение текста из резюме — резюме не загружено")
+        stage_text.caption("Skipping resume extraction - no resume uploaded.")
 
     if transcript_files:
-        set_stage(2, f"файлов: {len(transcript_files)}")
-        file_progress = st.progress(0, text="Подготовка транскриптов...")
+        set_stage(2, f"files: {len(transcript_files)}")
+        file_progress = st.progress(0, text="Preparing transcripts...")
         for index, transcript in enumerate(transcript_files, start=1):
             transcript_text = transcript.getvalue().decode("utf-8", errors="ignore").strip()
             if not transcript_text:
@@ -413,9 +413,9 @@ if st.button("Extract QA"):
             set_stage(6, transcript.name)
             file_progress.progress(
                 min(100, int(index / len(transcript_files) * 100)),
-                text=f"Обработано: {transcript.name}",
+                text=f"Processed: {transcript.name}",
             )
-        progress_bar.progress(100, text="Готово")
+        progress_bar.progress(100, text="Done")
         st.success(f"Done. QA saved to {QA_OUTPUT_DIR}.")
     elif transcript_path_input:
         input_path = Path(transcript_path_input)
@@ -433,15 +433,15 @@ if st.button("Extract QA"):
             )
             set_stage(5, input_path.name)
             set_stage(6, input_path.name)
-            progress_bar.progress(100, text="Готово")
+            progress_bar.progress(100, text="Done")
             st.success(f"Done. QA saved to {QA_OUTPUT_DIR}.")
         elif input_path.is_dir():
             transcript_paths = sorted(input_path.glob("*.txt"))
             if not transcript_paths:
                 st.warning("No .txt files found in the folder.")
             else:
-                set_stage(2, f"файлов: {len(transcript_paths)}")
-                file_progress = st.progress(0, text="Подготовка транскриптов...")
+                set_stage(2, f"files: {len(transcript_paths)}")
+                file_progress = st.progress(0, text="Preparing transcripts...")
                 for index, transcript_path in enumerate(transcript_paths, start=1):
                     set_stage(3, transcript_path.name)
                     set_stage(4, transcript_path.name)
@@ -460,9 +460,9 @@ if st.button("Extract QA"):
                             100,
                             int(index / len(transcript_paths) * 100),
                         ),
-                        text=f"Обработано: {transcript_path.name}",
+                        text=f"Processed: {transcript_path.name}",
                     )
-                progress_bar.progress(100, text="Готово")
+                progress_bar.progress(100, text="Done")
                 st.success(f"Done. QA saved to {QA_OUTPUT_DIR}.")
         else:
             st.warning("Path not found.")
