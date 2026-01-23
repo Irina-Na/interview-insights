@@ -94,6 +94,7 @@ docker compose up --build insights
 ## Notes
 - Resume formats supported: `.pdf`, `.txt`, `.md`.
 - Scanned PDFs without text need OCR (not included).
+- Transcripts are expected to include timestamps; otherwise, QA reference pointers will be missing.
 
 ---
 
@@ -187,3 +188,4 @@ docker compose up --build insights
 ## Примечания
 - Поддерживаемые форматы резюме: `.pdf`, `.txt`, `.md`.
 - Для сканов PDF без текста нужен OCR (не включён).
+- Ожидаются транскрипты с таймкодами; иначе ссылки/референсы в QA отсутствуют.
