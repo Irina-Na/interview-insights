@@ -4,14 +4,14 @@ Pipeline for interview recordings: transcribe audio/video, then extract Q/A insi
 
 ## What it does
 - Transcribes media into `transcriptions/` (via `speech-to-text/`).
-- Extracts Q/A pairs into `interview_insider/interview_insights/`.
+- Extracts Q/A pairs into `interview_insider/interview_insights/` as JSON and Markdown.
 - Supports CLI and a Streamlit UI for insights.
 
 ## Project layout
 - `speech-to-text/` - submodule with Whisper transcriber (separate container).
-- `transcriptions/` - transcripts (txt).
+- `transcriptions/` - transcripts (`.txt`).
 - `interview_insider/` - extraction code and Streamlit app (insights only).
-- `interview_insider/interview_insights/` - JSON outputs.
+- `interview_insider/interview_insights/` - QA outputs (`.json` + `.md`).
 
 ## Requirements
 - Python 3.12+
@@ -46,6 +46,9 @@ python -m interview_insider.qa_extractor \
 
 Outputs are saved to `interview_insider/interview_insights/`.
 
+### Models
+CLI aliases: `o3`, `5.2`, `4.1`, `o4-mini`.
+
 ## Streamlit UI (insights only)
 
 ```bash
@@ -55,32 +58,32 @@ streamlit run interview_insider/app.py --server.maxUploadSize 2048
 ## Docker
 Two-container setup (recommended):
 
-Win:
+Windows (PowerShell):
 ```powershell
 $env:OPENAI_API_KEY="your_key"
 docker compose up --build
 ```
 
-Linux:
+Linux/macOS:
 ```bash
-setx OPENAI_API_KEY "your_key"
+export OPENAI_API_KEY="your_key"
 docker compose up --build
 ```
 
 - ASR UI: http://localhost:8502 (writes transcripts into `transcriptions/`)
-- Insights UI: http://localhost:8501 (reads from `transcriptions/`)
+- Insights UI: http://localhost:8501 (reads from `transcriptions/`, or you can upload files)
 
 Run only the Insights container (from compose):
 
-Win:
+Windows (PowerShell):
 ```powershell
-$env:OPENAI_API_KEY="sk-.."
+$env:OPENAI_API_KEY="your_key"
 docker compose up --build insights
 ```
 
-Linux:
+Linux/macOS:
 ```bash
-setx OPENAI_API_KEY "your_key"
+export OPENAI_API_KEY="your_key"
 docker compose up --build insights
 ```
 
