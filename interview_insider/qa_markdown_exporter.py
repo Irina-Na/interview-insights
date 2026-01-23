@@ -92,12 +92,10 @@ def qa_json_to_markdown(qa_json: dict[str, Any]) -> str:
         if ideal_ru or ideal_en:
             lines.append("")
             lines.append("**Ideal answer examples:**")
-            if ideal_ru:
-                lines.append("*RU:*")
-                lines.append(f"> {ideal_ru}")
-            if ideal_en:
-                lines.append("*EN:*")
-                lines.append(f"> {ideal_en}")
+            lines.append("*RU:*")
+            lines.append(f"> {ideal_ru or '—'}")
+            lines.append("*EN:*")
+            lines.append(f"> {ideal_en or '—'}")
 
         lines.append("")
         lines.append("---")

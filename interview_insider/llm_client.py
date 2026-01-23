@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal, Type, TypeVar
+from typing import Literal, Type, TypeVar, Any
 
 from openai import OpenAI
 from pydantic import BaseModel
@@ -37,6 +37,19 @@ class LLMClient:
             raise ValueError(f"Unsupported model '{model}'. Supported: {supported}")
         return resolved
 
+    def _usage_to_dict(self, usage: Any | None) -> dict[str, Any]:
+        if usage is None:
+            return {}
+        if isinstance(usage, dict):
+            return usage
+        if hasattr(usage, "model_dump"):
+            return usage.model_dump()
+        if hasattr(usage, "dict"):
+            return usage.dict()
+        if hasattr(usage, "__dict__"):
+            return {key: value for key, value in usage.__dict__.items() if not key.startswith("_")}
+        return {}
+
     def call_structured_llm(
         self,
         *,
@@ -44,7 +57,7 @@ class LLMClient:
         user_message: str,
         model: ModelChoice | str,
         response_model: Type[T],
-    ) -> T:
+    ) -> tuple[T, dict[str, Any]]:
         response = self._client.responses.parse(
             model=self.resolve_model(model),
             input=[
@@ -55,7 +68,7 @@ class LLMClient:
         )
         if response.output_parsed is None:
             raise ValueError("Model did not return structured output.")
-        return response.output_parsed
+        return response.output_parsed, self._usage_to_dict(response.usage)
 
     def extract_qa_json(
         self,
@@ -63,11 +76,11 @@ class LLMClient:
         system_prompt: str,
         user_message: str,
         model: ModelChoice | str,
-    ) -> dict:
-        extracted = self.call_structured_llm(
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        extracted, usage = self.call_structured_llm(
             system_prompt=system_prompt,
             user_message=user_message,
             model=model,
             response_model=QAExtraction,
         )
-        return extracted.model_dump()
+        return extracted.model_dump(), usage

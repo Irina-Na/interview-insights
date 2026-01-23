@@ -91,7 +91,7 @@ def run_qa_extraction(
     llm_client = LLMClient()
     if stage_callback:
         stage_callback("Querying the model (LLM)")
-    result_json = llm_client.extract_qa_json(
+    result_json, usage = llm_client.extract_qa_json(
         system_prompt=system_prompt,
         user_message=user_message,
         model=model,
@@ -119,6 +119,11 @@ def run_qa_extraction(
         encoding="utf-8",
     )
     save_markdown_for_qa_json(result_json, file_path)
+    usage_path = file_path.with_suffix(".usage.json")
+    usage_path.write_text(
+        json.dumps({"usage": usage}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
     return file_path
 
 

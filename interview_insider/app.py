@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
+import html
+from typing import Any
 import json
 import sys
 
@@ -93,6 +96,30 @@ QA_PROGRESS_STAGES = [
     "Saving output files",
 ]
 QA_PROGRESS_INDEX = {stage: idx for idx, stage in enumerate(QA_PROGRESS_STAGES)}
+
+
+def _extract_usage_numbers(usage: dict) -> dict[str, int]:
+    if not isinstance(usage, dict):
+        return {}
+    summary: dict[str, int] = {}
+    input_tokens = usage.get("input_tokens")
+    output_tokens = usage.get("output_tokens")
+    total_tokens = usage.get("total_tokens")
+    if isinstance(input_tokens, int):
+        summary["input_tokens"] = input_tokens
+    if isinstance(output_tokens, int):
+        summary["output_tokens"] = output_tokens
+    if isinstance(total_tokens, int):
+        summary["total_tokens"] = total_tokens
+    input_details = usage.get("input_tokens_details") or {}
+    output_details = usage.get("output_tokens_details") or {}
+    cached_tokens = input_details.get("cached_tokens")
+    reasoning_tokens = output_details.get("reasoning_tokens")
+    if isinstance(cached_tokens, int):
+        summary["cached_input_tokens"] = cached_tokens
+    if isinstance(reasoning_tokens, int):
+        summary["reasoning_tokens"] = reasoning_tokens
+    return summary
 
 
 st.set_page_config(page_title="Interview Insights (QA only)", page_icon="I", layout="wide")
@@ -264,6 +291,69 @@ st.markdown(
         font-size: 0.78rem;
         color: var(--text);
       }
+
+      .qa-card {
+        border-top: 1px solid var(--line);
+        padding: 1.4rem 0 1.6rem 0;
+      }
+
+      .qa-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.45rem;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+      }
+
+      .qa-meta {
+        color: var(--muted);
+        font-size: 0.95rem;
+        margin: 0.1rem 0;
+      }
+
+      .qa-section {
+        margin-top: 1rem;
+      }
+
+      .qa-section-title {
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+      }
+
+      .qa-list {
+        padding-left: 1.2rem;
+        margin: 0.2rem 0 0.2rem 0;
+      }
+
+      .qa-list li {
+        margin: 0.2rem 0;
+      }
+
+      .qa-stages {
+        margin: 0.1rem 0 0 0;
+        padding-left: 1.05rem;
+      }
+
+      .qa-stages li {
+        margin: 0.05rem 0;
+      }
+
+      .qa-error-icon {
+        color: #ff6b6b;
+        font-weight: 700;
+        margin-right: 0.5rem;
+      }
+
+      .qa-quote {
+        border-left: 2px solid rgba(255,255,255,0.2);
+        padding-left: 0.9rem;
+        margin: 0.5rem 0 0.2rem 0;
+        color: var(--text);
+      }
+
+      .qa-label {
+        font-weight: 600;
+        color: var(--text);
+      }
     </style>
     """,
     unsafe_allow_html=True,
@@ -338,6 +428,121 @@ def render_card(card: dict[str, object]) -> str:
         </div>
       </div>
     """
+
+
+def _render_bulleted_list(
+    items: list[str],
+    icon_html: str | None = None,
+    list_class: str = "qa-list",
+) -> str:
+    li_items = []
+    for item in items:
+        safe_item = html.escape(str(item).strip())
+        if not safe_item:
+            continue
+        prefix = icon_html or ""
+        li_items.append(f"<li>{prefix}{safe_item}</li>")
+    if not li_items:
+        return ""
+    return f"<ul class='{list_class}'>" + "".join(li_items) + "</ul>"
+
+
+def _escape_with_breaks(text: str) -> str:
+    return html.escape(text).replace("\n", "<br>")
+
+
+def _render_qa_json_structured(qa_json: dict[str, Any]) -> None:
+    vacancy = str(qa_json.get("vacancy") or "").strip()
+    if vacancy:
+        st.markdown(f"# Interview Insights - {vacancy}")
+    else:
+        st.markdown("# Interview Insights")
+
+    role = str(qa_json.get("employee_role_identified") or "").strip()
+    if role:
+        st.markdown(f"**Role identified:** {role}")
+
+    stages = qa_json.get("stages_of_conversation_short") or []
+    if isinstance(stages, list) and stages:
+        st.markdown("**Conversation stages:**")
+        stages_list = _render_bulleted_list(
+            stages,
+            list_class="qa-list qa-stages",
+        )
+        if stages_list:
+            st.markdown(stages_list, unsafe_allow_html=True)
+
+    items = qa_json.get("items") or []
+    if not isinstance(items, list):
+        items = []
+
+    for index, item in enumerate(items, start=1):
+        if not isinstance(item, dict):
+            continue
+
+        question = str(item.get("question") or "").strip()
+        safe_question = html.escape(question)
+        title = f"Q{index}. <em>{safe_question}</em>" if question else f"Q{index}"
+        st.markdown(
+            f"<div class='qa-card'><div class='qa-title'>{title}</div>",
+            unsafe_allow_html=True,
+        )
+
+        timecode = str(item.get("timecode") or "").strip()
+        place = str(item.get("place_in_the_text") or "").strip()
+        if timecode:
+            st.markdown(
+                f"<div class='qa-meta'><span class='qa-label'>Timecode:</span> {html.escape(timecode)}</div>",
+                unsafe_allow_html=True,
+            )
+        if place:
+            st.markdown(
+                f"<div class='qa-meta'><span class='qa-label'>Place:</span> {html.escape(place)}</div>",
+                unsafe_allow_html=True,
+            )
+
+        candidate_answer = str(item.get("candidates_answer") or "").strip()
+        if candidate_answer:
+            st.markdown("<div class='qa-section'><div class='qa-section-title'>Candidate answer (summary):</div></div>", unsafe_allow_html=True)
+            st.markdown(candidate_answer)
+
+        short_eval = str(item.get("short_candidate_answer_evaluation") or "").strip()
+        if short_eval:
+            st.markdown("<div class='qa-section'><div class='qa-section-title'>Answer evaluation (short):</div></div>", unsafe_allow_html=True)
+            st.markdown(short_eval)
+
+        key_idea = str(item.get("key_idea") or "").strip()
+        if key_idea:
+            st.markdown("<div class='qa-section'><div class='qa-section-title'>Key idea:</div></div>", unsafe_allow_html=True)
+            st.markdown(key_idea)
+
+        errors = item.get("errors_and_problems") or []
+        if isinstance(errors, list) and errors:
+            errors_list = _render_bulleted_list(errors, "<span class='qa-error-icon'>x</span>")
+            if errors_list:
+                st.markdown("<div class='qa-section'><div class='qa-section-title'>Issues:</div></div>", unsafe_allow_html=True)
+                st.markdown(errors_list, unsafe_allow_html=True)
+
+        improvements = item.get("what_to_fix") or []
+        if isinstance(improvements, list) and improvements:
+            improvements_list = _render_bulleted_list(improvements)
+            if improvements_list:
+                st.markdown("<div class='qa-section'><div class='qa-section-title'>How to improve the answer:</div></div>", unsafe_allow_html=True)
+                st.markdown(improvements_list, unsafe_allow_html=True)
+        elif isinstance(improvements, str) and improvements.strip():
+            st.markdown("<div class='qa-section'><div class='qa-section-title'>How to improve the answer:</div></div>", unsafe_allow_html=True)
+            st.markdown(improvements.strip())
+
+        ideal_ru = str(item.get("the_ideal_answer_example_ru") or "").strip()
+        ideal_en = str(item.get("the_ideal_answer_example_eng") or "").strip()
+        if ideal_ru or ideal_en:
+            st.markdown("<div class='qa-section'><div class='qa-section-title'>Ideal answer:</div></div>", unsafe_allow_html=True)
+            st.markdown("<div class='qa-label'>RU:</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='qa-quote'>{_escape_with_breaks(ideal_ru or '--')}</div>", unsafe_allow_html=True)
+            st.markdown("<div class='qa-label'>EN:</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='qa-quote'>{_escape_with_breaks(ideal_en or '--')}</div>", unsafe_allow_html=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
 
 model_columns = st.columns(len(MODEL_CARDS), gap="large")
@@ -516,7 +721,37 @@ else:
             except (json.JSONDecodeError, OSError) as exc:
                 st.error(f"Failed to read {selected_file.name}: {exc}")
             else:
-                st.markdown(qa_json_to_markdown(qa_data))
+                usage_path = selected_file.with_suffix(".usage.json")
+                if usage_path.exists():
+                    try:
+                        usage_payload = json.loads(usage_path.read_text(encoding="utf-8"))
+                    except (json.JSONDecodeError, OSError) as exc:
+                        st.error(f"Failed to read {usage_path.name}: {exc}")
+                    else:
+                        usage = usage_payload.get("usage") if isinstance(usage_payload, dict) else {}
+                        summary = _extract_usage_numbers(usage)
+                        if summary:
+                            st.markdown("**Token usage:**")
+                            labels = [
+                                ("total_tokens", "Total"),
+                                ("input_tokens", "Input"),
+                                ("output_tokens", "Output"),
+                                ("cached_input_tokens", "Cached input"),
+                                ("reasoning_tokens", "Reasoning"),
+                            ]
+                            metrics = [(key, label) for key, label in labels if key in summary]
+                            columns = st.columns(len(metrics))
+                            for column, (key, label) in zip(columns, metrics):
+                                column.metric(label, summary[key])
+                show_markdown = st.checkbox(
+                    "Render as markdown",
+                    value=False,
+                    help="Use the markdown exporter instead of the structured UI renderer.",
+                )
+                if show_markdown:
+                    st.markdown(qa_json_to_markdown(qa_data))
+                else:
+                    _render_qa_json_structured(qa_data)
 
 st.divider()
 st.subheader("Markdown viewer")
