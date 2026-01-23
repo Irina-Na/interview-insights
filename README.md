@@ -11,6 +11,12 @@ Pipeline for interview recordings: transcribe audio/video, then extract Q/A insi
 - Extracts Q/A pairs into `interview_insider/interview_insights/` as JSON and Markdown.
 - Supports CLI and a Streamlit UI for insights.
 
+## UI
+![UI screenshot](docs/ui2.png)
+
+## Example output
+![Example output screenshot](docs/result-example_en.png)
+
 ## Project layout
 - `speech-to-text/` - submodule with Whisper transcriber (separate container).
 - `transcriptions/` - transcripts (`.txt`).
@@ -104,6 +110,9 @@ docker compose up --build insights
 - Транскрибирует аудио/видео в `transcriptions/` (через `speech-to-text/`).
 - Извлекает пары «вопрос–ответ» в `interview_insider/interview_insights/` в форматах JSON и Markdown.
 - Поддерживает CLI и Streamlit‑интерфейс для инсайтов.
+
+## Пример результата
+![Example output screenshot](docs/result-example.png)
 
 ## Структура проекта
 - `speech-to-text/` — сабмодуль с Whisper‑транскрибатором (отдельный контейнер).
